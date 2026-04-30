@@ -1,12 +1,12 @@
 package eternum.bot.commands;
 
+import eternum.bot.model.Alert;
+import eternum.bot.service.AlertManager;
 import eternum.bot.service.AllValutes;
-import eternum.bot.service.CbrApiClient;
-import eternum.bot.service.CharCodeValute;
+import eternum.bot.service.BotExchangeService;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
-import eternum.bot.service.CbrApiClient;
 /**
  * Класс для обработки команд бота
  */
@@ -46,6 +46,10 @@ public class CommandHandler {
                 } else if (command.startsWith("/curs ")) {
                     String specificCommand = command.substring(6);
                     response.setText(handleSpecificCurs(specificCommand));
+
+                } else if (command.startsWith("/alert ")) {
+                    // Формат команды: /alert USD/EUR 0.95
+                    response.setText(handleAlertCommand(command, chatId));
                 }
                 else {
                     response.setText("Неизвестная команда. Используйте /help для списка команд.");
@@ -73,7 +77,7 @@ public class CommandHandler {
 
     private String handleAuthorsCommand() {
         return "Авторы: Овчинников Александр\n" +
-                "Сергеев Максим\n";
+                "Сергеев Максим\n" + "Чапанов Никита\n";
     }
 
     private String handleAboutCommand() {
@@ -101,6 +105,46 @@ public class CommandHandler {
     }
 
     private String handleSpecificCurs(String command) {
-        return CharCodeValute.CodeValute(command);
+        String pair = command.trim().toUpperCase();
+
+        if (!pair.contains("/") && pair.length() == 3) {
+            pair = pair + "/RUB";
+        }
+
+        double rate = BotExchangeService.getCurrentRate(pair);
+
+        if (rate == -1.0) {
+            return "Не удалось найти курс для: " + pair +
+                    "\nУбедитесь, что коды валют верны (например, USD/EUR или USD).";
+        }
+
+        return "Курс " + pair + ": " + String.format("%.4f", rate);
+    }
+
+    private String handleAlertCommand(String command, Long chatId) {
+        try {
+            String[] parts = command.split(" ");
+            if (parts.length != 3) {
+                return "Неверный формат. Используйте: /alert <ПАРА> <КУРС>\nПример: /alert USD/EUR 0.95";
+            }
+
+            String pair = parts[1].toUpperCase();
+            double targetRate = Double.parseDouble(parts[2].replace(",", "."));
+
+            double currentRate = BotExchangeService.getCurrentRate(pair);
+
+            if (currentRate == -1.0) {
+                return "Валютная пара " + pair + " не найдена.";
+            }
+
+            Alert newAlert = new Alert(chatId, pair, currentRate, targetRate);
+            AlertManager.addAlert(newAlert);
+
+            return "Уведомление установлено! Текущий курс: " + String.format("%.4f", currentRate) +
+                    ". Я сообщу, когда он достигнет " + targetRate;
+
+        } catch (NumberFormatException e) {
+            return "Ошибка: курс должен быть числом.";
+        }
     }
 }

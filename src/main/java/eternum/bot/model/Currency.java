@@ -1,45 +1,47 @@
 package eternum.bot.model;
 
-import java.math.BigDecimal;
+import com.google.gson.annotations.SerializedName;
 
 public class Currency {
-    private String Name;
-    private BigDecimal Value;
-    private BigDecimal curs;
-    private int code;
-    private String CharCode;
-    private double unitRate;
 
-    public Currency(int code, String Name, String CharCode, double unitRate, BigDecimal curs, BigDecimal Value) {
-        this.code = code;
-        this.Name = Name;
-        this.CharCode = CharCode;
-        this.unitRate = unitRate;
-        this.curs = curs;
-        this.Value = Value;
-    }
+    @SerializedName("NumCode")
+    private String numCode;
+
+    @SerializedName("CharCode")
+    private String charCode;
+
+    @SerializedName("Nominal")
+    private int nominal;
+
+    @SerializedName("Name")
+    private String name;
+
+    @SerializedName("Value")
+    private double value;
+
+    public Currency() {}
 
     public String getName() {
-        return Name;
-    }
-
-    public double getUnitRate() {
-        return unitRate;
+        return name;
     }
 
     public String getCharCode() {
-        return CharCode;
+        return charCode;
     }
 
-    public int getCode() {
-        return code;
+    public int getNominal() {
+        return nominal;
     }
 
-    public BigDecimal getCurs() {
-        return curs;
+    public double getValue() {
+        return value;
     }
 
-    public BigDecimal getValue() {
-        return Value;
+
+    // Вычисляет реальный курс за 1 единицу валюты,
+
+    public double getUnitRate() {
+        if (nominal == 0) return 0.0; // Защита от деления на ноль
+        return value / nominal;
     }
 }

@@ -1,5 +1,6 @@
 package eternum.bot.service;
 
+
 import eternum.bot.model.Currency;
 
 import java.util.List;

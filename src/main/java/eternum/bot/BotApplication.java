@@ -1,28 +1,31 @@
 package eternum.bot;
 
+import eternum.bot.service.BotExchangeService;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-/**
- * Класс для запуска приложения и регистрации бота
- */
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class BotApplication {
     public static void main(String[] args) {
         try {
+            SimpleTelegramBot bot = new SimpleTelegramBot();
+            BotExchangeService.init(bot);
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            scheduler.scheduleAtFixedRate(
+                    BotExchangeService::updateRatesAndCheckAlerts,
+                    0, 15, TimeUnit.MINUTES
+            );
+
             System.out.println("Запуск Telegram бота...");
-
-            // Создае System.out.prin API для работы с ботами
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-
-            // Регистрируем нашего бота
-            botsApi.registerBot(new SimpleTelegramBot());
-
-            System.out.println("Бот успешно запущен и готов к работе!");
-            System.out.println("Для остановки нажмите Ctrl+C");
+            botsApi.registerBot(bot);
+            System.out.println("Бот успешно запущен!");
 
         } catch (TelegramApiException e) {
-            System.err.println("Ошибка при запуске бота: " + e.getMessage());
             e.printStackTrace();
         }
     }
