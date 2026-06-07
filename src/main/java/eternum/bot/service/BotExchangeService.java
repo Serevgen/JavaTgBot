@@ -2,7 +2,6 @@ package eternum.bot.service;
 
 import eternum.bot.SimpleTelegramBot;
 import eternum.bot.model.Currency;
-
 import java.util.List;
 
 public class BotExchangeService {
@@ -17,11 +16,9 @@ public class BotExchangeService {
     public static double getCurrentRate(String pair) {
         pair = pair.toUpperCase().replace(" ", "");
 
-        // 1. Проверяем, есть ли готовый курс в графе (базовый или уже вычисленный кросс-курс)
         double rate = graph.getCalculatedRate(pair);
         if (rate != -1.0) return rate;
 
-        // 2. Если это кросс-курс без RUB, пробуем рассчитать динамически
         if (pair.contains("/")) {
             String[] parts = pair.split("/");
             if (parts.length == 2) {
@@ -46,22 +43,38 @@ public class BotExchangeService {
 
     public static void updateRatesAndCheckAlerts() {
         try {
-            System.out.println("Обновление курсов и проверка уведомлений...");
+            System.out.println("Обновление курсов...");
+
+            graph.clear();
 
             List<Currency> cbrData = CbrApiClient.listOfValutes();
+            List<Currency> cryptoData = CryptoApiClient.listOfCrypto();
 
             graph.initBaseRatesFromCbr(cbrData);
-            graph.addCrossRateTarget("USD/EUR", "USD/RUB", "EUR/RUB");
+            graph.initBaseRatesFromCrypto(cryptoData);
+
+
+            graph.addCrossRateTarget("USD/EUR", "USD/RUB", "EUR/RUB", false);
+
+            graph.addCrossRateTarget("BTC/RUB", "BTC/USD", "USD/RUB", true);
+            graph.addCrossRateTarget("ETH/RUB", "ETH/USD", "USD/RUB", true);
+            graph.addCrossRateTarget("BNB/RUB", "BNB/USD", "USD/RUB", true);
+
+
+            graph.addCrossRateTarget("BTC/EUR", "BTC/RUB", "EUR/RUB", false);
+            graph.addCrossRateTarget("ETH/EUR", "ETH/RUB", "EUR/RUB", false);
+
+            // Запускаем вычисления
             graph.calculateWithTopologicalSort();
 
             if (alertManager != null) {
-                alertManager.checkAlertsAndNotify(graph); //
+                alertManager.checkAlertsAndNotify(graph);
             }
 
             System.out.println("Обновление успешно завершено.");
         } catch (Exception e) {
             System.err.println("Ошибка в цикле обновления: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
 }

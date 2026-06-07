@@ -1,8 +1,8 @@
 package eternum.bot.service;
 
-import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import eternum.bot.model.Currency;
-import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -18,18 +18,12 @@ public class CbrApiClient {
                 json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             }
 
-            JSONObject currenciesData = new JSONObject(json).getJSONObject("Valute");
-            Gson gson = new Gson();
+            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+            JsonObject valuteMap = root.getAsJsonObject("Valute");
 
-            List<Currency> currencies = currenciesData.keySet()
-                    .stream()
-                    .map((currencyKey) -> gson.fromJson(
-                            currenciesData.getJSONObject(currencyKey).toString(),
-                            Currency.class
-                    ))
+            return valuteMap.keySet().stream()
+                    .map(key -> Currency.fromCbrJson(valuteMap.getAsJsonObject(key)))
                     .toList();
-
-            return currencies;
         } catch (Exception e) {
             throw new RuntimeException("Ошибка при загрузке данных о валютах от ЦБ РФ", e);
         }
