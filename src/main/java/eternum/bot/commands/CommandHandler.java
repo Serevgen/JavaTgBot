@@ -36,14 +36,14 @@ public class CommandHandler {
             case "/about":
                 response.setText(handleAboutCommand());
                 break;
-            case "/curs":
+            case "/rate":
                 response.setText(handleValuteCommand());
                 break;
             default:
                 if (command.startsWith("/help ")) {
                     String specificCommand = command.substring(6);
                     response.setText(handleSpecificHelp(specificCommand));
-                } else if (command.startsWith("/curs ")) {
+                } else if (command.startsWith("/rate ")) {
                     String specificCommand = command.substring(6);
                     response.setText(handleSpecificCurs(specificCommand));
 

@@ -108,8 +108,6 @@ class CommandHandlerTest {
 
             SendMessage response = commandHandler.handleCommand(testMessage);
 
-            System.out.println("Actual response: " + response.getText());
-
             assertTrue(response.getText().contains("Не удалось найти курс для: XXX/RUB"));
         }
     }
